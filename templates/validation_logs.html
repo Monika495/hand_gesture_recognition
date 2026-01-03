@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Validation Logs{% endblock %}
+
+{% block content %}
+<div class="logs-container">
+    <div class="logs-header">
+        <h1><i class="fas fa-clipboard-list"></i> Validation History</h1>
+        <p>Complete record of all gesture validations</p>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <span class="stat-number">{{ logs|length }}</span>
+                <span class="stat-label">Total Validations</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <span class="stat-number">{{ correct_count }}</span>
+                <span class="stat-label">Correct</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-content">
+                <span class="stat-number">{{ wrong_count }}</span>
+                <span class="stat-label">Wrong</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-content">
+                <span class="stat-number">{{ accuracy }}%</span>
+                <span class="stat-label">Accuracy</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="logs-table-container">
+        {% if logs %}
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Detected Gesture</th>
+                    <th>Expected</th>
+                    <th>Distance</th>
+                    <th>Threshold</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="{{ 'log-correct' if log.is_correct else 'log-wrong' }}">
+                    <td>
+                        {% if log.is_correct %}
+                            <span class="status-badge status-correct">✅ Correct</span>
+                        {% else %}
+                            <span class="status-badge status-wrong">❌ Wrong</span>
+                        {% endif %}
+                    </td>
+                    <td class="gesture-name">
+                        {{ log.detected_gesture or 'No Match' }}
+                    </td>
+                    <td class="expected-gestures">
+                        {{ log.expected_gestures_list|join(', ') if log.expected_gestures_list else 'All' }}
+                    </td>
+                    <td class="distance-val">
+                        {{ "%.4f"|format(log.distance) if log.distance else '-' }}
+                    </td>
+                    <td class="threshold-val">
+                        {{ "%.2f"|format(log.threshold_used) if log.threshold_used else '-' }}
+                    </td>
+                    <td class="timestamp">
+                        <div class="timestamp-container">
+                            <span class="date">{{ log.timestamp.strftime('%b %d, %Y') }}</span>
+                            <span class="time">{{ log.timestamp.strftime('%I:%M:%S %p') }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-logs">
+            <i class="fas fa-clipboard fa-4x text-muted"></i>
+            <h3>No validation logs yet</h3>
+            <p>Start validating gestures to see logs here</p>
+            <a href="{{ url_for('live_validation') }}" class="btn btn-primary">Start Validating</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="logs-footer">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+.logs-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.logs-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.logs-header h1 {
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.logs-header p {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 3rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+}
+
+.logs-table-container {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.logs-table thead {
+    background: #f8fafc;
+}
+
+.logs-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 700;
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.logs-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s;
+}
+
+.logs-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.logs-table td {
+    padding: 1rem;
+}
+
+.log-correct {
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.log-wrong {
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: inline-block;
+}
+
+.status-correct {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-wrong {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.gesture-name {
+    font-weight: 600;
+    color: #1e293b;
+    text-transform: capitalize;
+}
+
+.expected-gestures {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.distance-val, .threshold-val {
+    font-family: 'Courier New', monospace;
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* FIXED: Better timestamp display */
+.timestamp-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.timestamp-container .date {
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.timestamp-container .time {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+}
+
+.empty-logs {
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.empty-logs h3 {
+    margin: 1.5rem 0 0.5rem;
+    color: #1e293b;
+}
+
+.empty-logs p {
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+
+.logs-footer {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-secondary {
+    background: #64748b;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .logs-container {
+        padding: 1rem;
+    }
+    
+    .logs-table {
+        font-size: 0.875rem;
+    }
+    
+    .logs-table th,
+    .logs-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+</style>
+{% endblock %}

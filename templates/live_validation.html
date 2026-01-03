@@ -1,0 +1,1417 @@
+{% extends "base.html" %}
+
+{% block title %}Live Gesture Validation{% endblock %}
+
+{% block content %}
+<div class="validation-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="fas fa-hand-pointer"></i> Live Gesture Validation</h1>
+            <p class="subtitle">Real-time AI-powered gesture recognition</p>
+        </div>
+        <a href="{{ url_for('validation_logs') }}" class="btn btn-outline-primary">
+            <i class="fas fa-clipboard-list"></i> View All Logs
+        </a>
+    </div>
+
+    <!-- Settings Bar - IMPROVED LAYOUT -->
+    <div class="settings-grid">
+        <!-- Sensitivity Box -->
+        <div class="setting-box">
+            <div class="box-header">
+                <i class="fas fa-bullseye"></i>
+                <span>Sensitivity</span>
+                <span class="value-badge" id="sensitivityValue">0.45</span>
+            </div>
+            <input type="range" id="sensitivitySlider" min="0.2" max="0.6" step="0.05" value="0.45" class="slider">
+            <div class="slider-labels">
+                <span>Easy</span>
+                <span>Normal</span>
+                <span>Strict</span>
+            </div>
+        </div>
+
+        <!-- Gestures Box -->
+        <div class="setting-box">
+            <div class="box-header">
+                <i class="fas fa-hand-rock"></i>
+                <span>Select Gestures</span>
+            </div>
+            <div class="gesture-selector">
+                <label class="select-all">
+                    <input type="checkbox" id="selectAllCheckbox" checked>
+                    <span>All Gestures</span>
+                </label>
+                <div class="gesture-chips">
+                    {% for gesture in gestures %}
+                    <label class="chip">
+                        <input type="checkbox" class="gesture-checkbox" value="{{ gesture.id }}" {% if gesture.sample_count > 0 %}checked{% endif %}>
+                        <span>{{ gesture.name|title }} <b>{{ gesture.sample_count }}</b></span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Options Box -->
+        <div class="setting-box">
+            <div class="box-header">
+                <i class="fas fa-cog"></i>
+                <span>Options</span>
+            </div>
+            <div class="options">
+                <label class="option-item">
+                    <input type="checkbox" id="soundToggle" checked>
+                    <span>Sound Effects</span>
+                </label>
+                <label class="option-item">
+                    <input type="checkbox" id="autoSaveToggle" checked>
+                    <span>Auto-save Results</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-grid">
+        <!-- Webcam Section -->
+        <div class="webcam-card">
+            <div class="webcam-wrapper">
+                <div class="status-badge" id="statusBadge">
+                    <span class="dot"></span>
+                    <span id="statusText">Camera Off</span>
+                </div>
+                <div class="gesture-indicator" id="gestureIndicator"></div>
+                
+                <div class="webcam-display">
+                    <div class="placeholder" id="placeholder">
+                        <i class="fas fa-camera fa-4x"></i>
+                        <p>Camera feed will appear here</p>
+                        <p class="hint">Click "Start Webcam" to begin</p>
+                    </div>
+                    <!-- SINGLE VIDEO ELEMENT - NO CANVAS OVERLAY -->
+                    <video id="videoElement" autoplay playsinline></video>
+                </div>
+
+                <div class="stats-overlay" id="statsOverlay">
+                    <div class="stat"><span>Total</span><b id="totalCount">0</b></div>
+                    <div class="stat success"><span>Correct</span><b id="correctCount">0</b></div>
+                    <div class="stat error"><span>Wrong</span><b id="wrongCount">0</b></div>
+                    <div class="stat"><span>Accuracy</span><b id="accuracyCount">0%</b></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="main-btns">
+                    <button class="btn success" id="startWebcamBtn">
+                        <i class="fas fa-play"></i> Start Webcam
+                    </button>
+                    <button class="btn primary" id="startValidationBtn" disabled>
+                        <i class="fas fa-hand-paper"></i> Start Validation
+                    </button>
+                </div>
+                <div class="sub-btns">
+                    <button class="btn danger" id="stopAllBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop All
+                    </button>
+                    <button class="btn outline" id="validateOnceBtn" disabled>
+                        <i class="fas fa-camera"></i> Validate Once
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-card">
+            <div class="results-header">
+                <h3><i class="fas fa-history"></i> Live Results</h3>
+                <button class="btn-sm danger" id="clearResultsBtn">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+            <div class="results-list" id="resultsList">
+                <div class="empty">
+                    <i class="fas fa-hand-paper fa-3x"></i>
+                    <p>No results yet</p>
+                    <p class="hint">Start validation to see results</p>
+                </div>
+            </div>
+            <div class="save-panel" id="savePanel">
+                <h4><i class="fas fa-save"></i> Save Session</h4>
+                <p>Choose which results to save</p>
+                <div class="save-btns">
+                    <button class="btn success" id="saveCorrectBtn">
+                        <i class="fas fa-check"></i> Correct Only
+                    </button>
+                    <button class="btn primary" id="saveAllBtn">
+                        <i class="fas fa-save"></i> Save All
+                    </button>
+                    <button class="btn outline" id="discardBtn">
+                        <i class="fas fa-times"></i> Discard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audio Elements with WORKING URLs -->
+<audio id="correctSound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3" type="audio/mpeg">
+</audio>
+<audio id="wrongSound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/946/946-preview.mp3" type="audio/mpeg">
+</audio>
+
+<div id="toastContainer"></div>
+
+<script>
+// =============================================
+// FIXED JAVASCRIPT - SINGLE CAMERA, WORKING SOUNDS
+// =============================================
+
+let webcamActive = false;
+let validationActive = false;
+let validationInterval = null;
+let webcamStream = null;
+let stats = {total: 0, correct: 0, wrong: 0};
+let sessionResults = [];
+
+const el = {
+    video: document.getElementById('videoElement'),
+    placeholder: document.getElementById('placeholder'),
+    statusBadge: document.getElementById('statusBadge'),
+    statusText: document.getElementById('statusText'),
+    gestureIndicator: document.getElementById('gestureIndicator'),
+    statsOverlay: document.getElementById('statsOverlay'),
+    resultsList: document.getElementById('resultsList'),
+    savePanel: document.getElementById('savePanel'),
+    startWebcamBtn: document.getElementById('startWebcamBtn'),
+    startValidationBtn: document.getElementById('startValidationBtn'),
+    stopAllBtn: document.getElementById('stopAllBtn'),
+    validateOnceBtn: document.getElementById('validateOnceBtn'),
+    clearResultsBtn: document.getElementById('clearResultsBtn'),
+    saveCorrectBtn: document.getElementById('saveCorrectBtn'),
+    saveAllBtn: document.getElementById('saveAllBtn'),
+    discardBtn: document.getElementById('discardBtn'),
+    sensitivitySlider: document.getElementById('sensitivitySlider'),
+    sensitivityValue: document.getElementById('sensitivityValue'),
+    soundToggle: document.getElementById('soundToggle'),
+    autoSaveToggle: document.getElementById('autoSaveToggle'),
+    totalCount: document.getElementById('totalCount'),
+    correctCount: document.getElementById('correctCount'),
+    wrongCount: document.getElementById('wrongCount'),
+    accuracyCount: document.getElementById('accuracyCount'),
+    correctSound: document.getElementById('correctSound'),
+    wrongSound: document.getElementById('wrongSound')
+};
+
+// Update sensitivity display
+el.sensitivitySlider.oninput = () => {
+    el.sensitivityValue.textContent = el.sensitivitySlider.value;
+};
+
+// Start Webcam - FIXED TO SHOW SINGLE CAMERA
+el.startWebcamBtn.onclick = async () => {
+    try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: 640,
+                height: 480,
+                facingMode: 'user'
+            }
+        });
+        
+        el.video.srcObject = webcamStream;
+        
+        el.video.onloadedmetadata = () => {
+            el.video.play();
+            el.video.style.display = 'block';
+            el.placeholder.style.display = 'none';
+            
+            webcamActive = true;
+            updateUI();
+            
+            el.statusBadge.classList.add('active');
+            el.statusText.textContent = 'Camera Active';
+            el.statsOverlay.style.display = 'flex';
+            
+            playSound('correct');
+            showToast('Success', 'Camera started', 'success');
+        };
+    } catch (err) {
+        console.error('Webcam error:', err);
+        showToast('Error', 'Could not access camera', 'error');
+    }
+};
+
+// Start Validation
+el.startValidationBtn.onclick = () => {
+    validationActive = true;
+    updateUI();
+    validationInterval = setInterval(validate, 1000);  // Every 2 seconds
+    showToast('Started', 'Validation is running', 'info');
+};
+
+// Stop All
+el.stopAllBtn.onclick = () => {
+    if (validationActive) {
+        validationActive = false;
+        clearInterval(validationInterval);
+    }
+    
+    if (webcamActive) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        el.video.style.display = 'none';
+        el.placeholder.style.display = 'flex';
+        webcamActive = false;
+        el.statusBadge.classList.remove('active');
+        el.statusText.textContent = 'Camera Off';
+        el.statsOverlay.style.display = 'none';
+    }
+    
+    updateUI();
+    
+    if (sessionResults.length > 0) {
+        el.savePanel.style.display = 'block';
+    }
+    
+    showToast('Stopped', 'Validation stopped', 'info');
+};
+
+// Validate Once
+el.validateOnceBtn.onclick = () => validate();
+
+// Clear Results
+el.clearResultsBtn.onclick = () => {
+    el.resultsList.innerHTML = '<div class="empty"><i class="fas fa-hand-paper fa-3x"></i><p>No results yet</p></div>';
+    stats = {total: 0, correct: 0, wrong: 0};
+    sessionResults = [];
+    updateStats();
+    el.savePanel.style.display = 'none';
+    showToast('Cleared', 'Results cleared', 'info');
+};
+
+// Save buttons
+el.saveCorrectBtn.onclick = () => saveResults('correct');
+el.saveAllBtn.onclick = () => saveResults('all');
+el.discardBtn.onclick = () => {
+    sessionResults = [];
+    el.savePanel.style.display = 'none';
+    showToast('Discarded', 'Results not saved', 'info');
+};
+
+// VALIDATION FUNCTION - FIXED
+async function validate() {
+    if (!webcamActive) return;
+    
+    try {
+        const img = captureFrame();
+        
+        const response = await fetch('/api/validate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                image: img,
+                gesture_ids: getSelectedGestures(),
+                threshold: parseFloat(el.sensitivitySlider.value),
+                session_id: 'session_' + Date.now()
+            })
+        });
+        
+        const data = await response.json();
+        processResult(data);
+        
+    } catch (err) {
+        console.error('Validation error:', err);
+        showToast('Error', 'Validation failed', 'error');
+    }
+}
+
+// Capture frame from video
+function captureFrame() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = el.video.videoWidth;
+    canvas.height = el.video.videoHeight;
+    
+    // Draw mirrored (so it matches what user sees)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(el.video, 0, 0);
+    
+    return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+}
+
+// Process validation result
+function processResult(result) {
+    if (!result.hand_detected) {
+        showIndicator('❌ No Hand Detected', 'wrong');
+        playSound('wrong');
+        return;
+    }
+    
+    stats.total++;
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: true});
+    
+    if (result.match) {
+        showIndicator(`✅ ${result.gesture_name}`, 'correct');
+        playSound('correct');
+        stats.correct++;
+        sessionResults.push({...result, correct: true, time});
+    } else {
+        showIndicator('❌ No Match Found', 'wrong');
+        playSound('wrong');
+        stats.wrong++;
+        sessionResults.push({...result, correct: false, time});
+    }
+    
+    updateStats();
+    addResult(result, time);
+}
+
+// Show indicator
+function showIndicator(text, type) {
+    el.gestureIndicator.className = 'gesture-indicator ' + type;
+    el.gestureIndicator.innerHTML = `<span>${text}</span>`;
+    el.gestureIndicator.style.display = 'block';
+    
+    setTimeout(() => {
+        el.gestureIndicator.style.display = 'none';
+    }, 2000);
+}
+
+// Add result to list
+function addResult(result, time) {
+    const empty = el.resultsList.querySelector('.empty');
+    if (empty) empty.remove();
+    
+    const div = document.createElement('div');
+    div.className = 'result-item ' + (result.match ? 'correct' : 'wrong');
+    
+    div.innerHTML = `
+        <div class="icon">${result.match ? '✅' : '❌'}</div>
+        <div class="content">
+            <div class="row">
+                <span class="name">${result.gesture_name || 'No Match'}</span>
+                <span class="time">${time}</span>
+            </div>
+            <div class="details">
+                ${result.distance ? `<span>Distance: ${result.distance.toFixed(3)}</span>` : ''}
+                ${result.confidence ? `<span>Confidence: ${result.confidence.toFixed(1)}%</span>` : ''}
+            </div>
+        </div>
+    `;
+    
+    el.resultsList.insertBefore(div, el.resultsList.firstChild);
+    
+    // Keep only last 10
+    if (el.resultsList.children.length > 10) {
+        el.resultsList.removeChild(el.resultsList.lastChild);
+    }
+}
+
+// Update stats
+function updateStats() {
+    el.totalCount.textContent = stats.total;
+    el.correctCount.textContent = stats.correct;
+    el.wrongCount.textContent = stats.wrong;
+    el.accuracyCount.textContent = stats.total > 0 
+        ? Math.round((stats.correct / stats.total) * 100) + '%' 
+        : '0%';
+}
+
+// Update UI state
+function updateUI() {
+    el.startWebcamBtn.disabled = webcamActive;
+    el.startValidationBtn.disabled = !webcamActive || validationActive;
+    el.stopAllBtn.disabled = !webcamActive && !validationActive;
+    el.validateOnceBtn.disabled = !webcamActive;
+}
+
+// Get selected gestures
+function getSelectedGestures() {
+    if (document.getElementById('selectAllCheckbox').checked) {
+        return [];
+    }
+    return Array.from(document.querySelectorAll('.gesture-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+}
+
+// FIXED: Play sound function
+function playSound(type) {
+    if (!el.soundToggle.checked) return;
+    
+    const audio = type === 'correct' ? el.correctSound : el.wrongSound;
+    
+    if (audio) {
+        audio.currentTime = 0;
+        audio.volume = 0.5;  // 50% volume
+        
+        // Play with error handling
+        audio.play().catch(err => {
+            console.log('Audio play failed:', err);
+        });
+    }
+}
+
+// Save results
+// In the script section of live_validation.html, replace the save/discard functions:
+
+// Save results
+// Replace the save/discard functions in live_validation.html <script> section
+
+// Save results - FIXED
+async function saveResults(mode) {
+    console.log(`💾 Saving results in mode: ${mode}`);
+    console.log(`Total session results: ${sessionResults.length}`);
+    
+    if (sessionResults.length === 0) {
+        showToast('Info', 'No results to save', 'info');
+        el.savePanel.style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/save-validation-batch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                results: sessionResults,
+                mode: mode  // 'correct' or 'all'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const message = mode === 'correct' 
+                ? `Saved ${data.saved_count} correct, deleted ${data.deleted_count} wrong`
+                : `Saved all ${data.saved_count} results`;
+            
+            showToast('Saved', message, 'success');
+            
+            // Clear session results
+            sessionResults = [];
+            
+            // Clear UI
+            el.resultsList.innerHTML = '<div class="empty"><i class="fas fa-hand-paper fa-3x"></i><p>No results yet</p><p class="hint">Start validation to see results</p></div>';
+            
+            // Reset stats
+            stats = {total: 0, correct: 0, wrong: 0};
+            updateStats();
+            
+            // Hide save panel
+            el.savePanel.style.display = 'none';
+        } else {
+            showToast('Error', data.error || 'Failed to save', 'error');
+        }
+        
+    } catch (err) {
+        console.error('Save error:', err);
+        showToast('Error', 'Failed to save results', 'error');
+    }
+}
+
+// Discard button handler - FIXED
+el.discardBtn.onclick = async () => {
+    if (!confirm('Are you sure you want to discard all results? This cannot be undone.')) {
+        return;
+    }
+    
+    console.log(`🗑️ Discarding ${sessionResults.length} results`);
+    
+    try {
+        const response = await fetch('/api/discard-validation-batch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                results: sessionResults
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Discarded', `${data.deleted_count} results removed from database`, 'info');
+            
+            // Clear session results
+            sessionResults = [];
+            
+            // Hide save panel
+            el.savePanel.style.display = 'none';
+            
+            // Clear results list
+            el.resultsList.innerHTML = '<div class="empty"><i class="fas fa-hand-paper fa-3x"></i><p>No results yet</p><p class="hint">Start validation to see results</p></div>';
+            
+            // Reset stats
+            stats = {total: 0, correct: 0, wrong: 0};
+            updateStats();
+        } else {
+            showToast('Error', data.error || 'Failed to discard', 'error');
+        }
+        
+    } catch (err) {
+        console.error('Discard error:', err);
+        showToast('Error', 'Failed to discard results', 'error');
+    }
+};
+
+// Update the save button click handlers
+el.saveCorrectBtn.onclick = () => saveResults('correct');
+el.saveAllBtn.onclick = () => saveResults('all');
+
+
+
+// Update results list function
+function updateResultsList() {
+    if (sessionResults.length === 0) {
+        el.resultsList.innerHTML = '<div class="empty"><i class="fas fa-hand-paper fa-3x"></i><p>No results yet</p><p class="hint">Start validation to see results</p></div>';
+        return;
+    }
+    
+    // Clear and rebuild results list
+    el.resultsList.innerHTML = '';
+    
+    // Show only last 10 results
+    const resultsToShow = sessionResults.slice(-10);
+    
+    resultsToShow.forEach(result => {
+        const div = document.createElement('div');
+        div.className = 'result-item ' + (result.correct ? 'correct' : 'wrong');
+        
+        div.innerHTML = `
+            <div class="icon">${result.correct ? '✅' : '❌'}</div>
+            <div class="content">
+                <div class="row">
+                    <span class="name">${result.gesture_name || 'No Match'}</span>
+                    <span class="time">${result.time}</span>
+                </div>
+                <div class="details">
+                    ${result.distance ? `<span>Distance: ${result.distance.toFixed(3)}</span>` : ''}
+                    ${result.confidence ? `<span>Confidence: ${result.confidence.toFixed(1)}%</span>` : ''}
+                </div>
+            </div>
+        `;
+        
+        el.resultsList.appendChild(div);
+    });
+}
+// Show toast notification
+function showToast(title, message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    
+    toast.innerHTML = `
+        <span class="icon">${icon}</span>
+        <div>
+            <b>${title}</b>
+            <p>${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    document.getElementById('toastContainer').appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// Select all checkbox handler
+document.getElementById('selectAllCheckbox').onchange = function() {
+    document.querySelectorAll('.gesture-checkbox').forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+};
+
+// Initialize
+updateUI();
+</script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.validation-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    padding: 2rem;
+}
+
+.page-header {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-content h1 {
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-content h1 i {
+    color: #3b82f6;
+}
+
+.subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   IMPROVED SETTINGS GRID - SEPARATE BOXES
+   ============================================ */
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.setting-box {
+    background: #fff;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,.08);
+    border: 2px solid #f1f5f9;
+    transition: all .3s;
+}
+
+.setting-box:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 8px 30px rgba(59,130,246,.15);
+    transform: translateY(-2px);
+}
+
+.box-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1rem;
+    padding-bottom: .75rem;
+    border-bottom: 2px solid #f1f5f9;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #1e293b;
+}
+
+.box-header i {
+    color: #3b82f6;
+    font-size: 1.2rem;
+}
+
+.value-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    padding: .25rem .75rem;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+/* Sensitivity Slider */
+.slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+    outline: none;
+    -webkit-appearance: none;
+    margin-bottom: .75rem;
+    cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    border: 3px solid #3b82f6;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+    transition: all .2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 15px rgba(59,130,246,.4);
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: .8rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Gesture Selector */
+.gesture-selector {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+.select-all {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid #e2e8f0;
+    transition: all .3s;
+    font-weight: 600;
+}
+
+.select-all:hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+}
+
+.select-all input {
+    width: 20px;
+    height: 20px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+}
+
+.gesture-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.chip {
+    cursor: pointer;
+    margin: 0;
+}
+
+.chip input {
+    display: none;
+}
+
+.chip span {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 25px;
+    transition: all .3s;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.chip:hover span {
+    border-color: #94a3b8;
+    transform: translateY(-2px);
+}
+
+.chip input:checked + span {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-color: #3b82f6;
+    color: #fff;
+}
+
+.chip b {
+    background: rgba(255,255,255,.3);
+    padding: .1rem .5rem;
+    border-radius: 10px;
+    font-size: .75rem;
+}
+
+/* Options */
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    cursor: pointer;
+    padding: .75rem 1rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    transition: all .3s;
+    font-weight: 600;
+}
+
+.option-item:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.option-item input {
+    width: 20px;
+    height: 20px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+}
+
+/* Main Grid */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1.3fr .7fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Webcam Card */
+.webcam-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,.1);
+}
+
+.webcam-wrapper {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #0f172a;
+    margin-bottom: 1.5rem;
+}
+
+.status-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(30,41,59,.95);
+    padding: .5rem 1rem;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.status-badge.active .dot {
+    background: #10b981;
+    animation: pulse 2s infinite;
+}
+
+.status-badge span {
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.gesture-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: .75rem 1.25rem;
+    border-radius: 15px;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    animation: slideIn .3s;
+    display: none;
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.gesture-indicator.correct {
+    background: rgba(16,185,129,.95);
+    border: 2px solid #10b981;
+}
+
+.gesture-indicator.wrong {
+    background: rgba(239,68,68,.95);
+    border: 2px solid #ef4444;
+}
+
+.webcam-display {
+    width: 100%;
+    height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,.6);
+    text-align: center;
+    gap: 1rem;
+}
+
+.placeholder i {
+    color: rgba(255,255,255,.3);
+}
+
+.placeholder p {
+    color: rgba(255,255,255,.8);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.hint {
+    font-size: .9rem !important;
+    color: rgba(255,255,255,.5) !important;
+}
+
+/* FIXED: Single video element, no canvas */
+#videoElement {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);  /* Mirror the video */
+}
+
+.stats-overlay {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30,41,59,.95);
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    display: none;
+    gap: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat span {
+    display: block;
+    color: rgba(255,255,255,.7);
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: .25rem;
+}
+
+.stat b {
+    display: block;
+    color: #fff;
+    font-size: 1.5rem;
+    font-family: monospace;
+}
+
+.stat.success b {
+    color: #10b981;
+}
+
+.stat.error b {
+    color: #ef4444;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.main-btns, .sub-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.btn {
+    padding: .75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    transition: all .3s;
+    text-decoration: none;
+    color: #fff;
+}
+
+.btn.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.btn.primary {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.btn.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.btn.outline {
+    background: #fff;
+    border: 2px solid #64748b;
+    color: #64748b;
+}
+
+.btn-outline-primary {
+    background: #fff;
+    border: 2px solid #3b82f6;
+    color: #3b82f6;
+    padding: .75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    transition: all .3s;
+}
+
+.btn:hover:not(:disabled), .btn-outline-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,0,0,.15);
+}
+
+.btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-sm {
+    padding: .5rem 1rem;
+    font-size: .9rem;
+}
+
+/* Results Card */
+.results-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,.1);
+    display: flex;
+    flex-direction: column;
+    max-height: 800px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+    margin-bottom: 1rem;
+}
+
+.results-header h3 {
+    color: #1e293b;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+}
+
+.results-header h3 i {
+    color: #3b82f6;
+}
+
+.results-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding-right: .5rem;
+}
+
+.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #94a3b8;
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty i {
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+}
+
+.result-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border-left: 4px solid;
+    transition: all .3s;
+    animation: slideIn .3s;
+}
+
+.result-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,.1);
+}
+
+.result-item.correct {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, rgba(16,185,129,.05), rgba(16,185,129,.02));
+}
+
+.result-item.wrong {
+    border-left-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239,68,68,.05), rgba(239,68,68,.02));
+}
+
+.result-item .icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.result-item.correct .icon {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.result-item.wrong .icon {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.result-item .content {
+    flex: 1;
+}
+
+.result-item .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .25rem;
+}
+
+.result-item .name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1.05rem;
+}
+
+.result-item .time {
+    font-size: .85rem;
+    color: #64748b;
+    font-family: monospace;
+}
+
+.result-item .details {
+    display: flex;
+    gap: 1rem;
+    font-size: .85rem;
+}
+
+.result-item .details span {
+    background: #fff;
+    padding: .25rem .5rem;
+    border-radius: 6px;
+    color: #475569;
+    font-family: monospace;
+}
+
+/* Save Panel */
+.save-panel {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 15px;
+    border: 2px dashed #cbd5e1;
+    display: none;
+}
+
+.save-panel h4 {
+    color: #1e293b;
+    margin-bottom: .5rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.save-panel h4 i {
+    color: #3b82f6;
+}
+
+.save-panel p {
+    color: #64748b;
+    font-size: .9rem;
+    margin-bottom: 1rem;
+}
+
+.save-btns {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+}
+
+/* Toast Notifications */
+#toastContainer {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 400px;
+}
+
+.toast {
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-left: 4px solid;
+    animation: slideIn .3s;
+}
+
+.toast.success {
+    border-left-color: #10b981;
+}
+
+.toast.error {
+    border-left-color: #ef4444;
+}
+
+.toast.info {
+    border-left-color: #3b82f6;
+}
+
+.toast .icon {
+    font-size: 1.5rem;
+}
+
+.toast div {
+    flex: 1;
+}
+
+.toast b {
+    font-weight: 700;
+    color: #1e293b;
+    display: block;
+    margin-bottom: .25rem;
+}
+
+.toast p {
+    color: #64748b;
+    font-size: .9rem;
+    margin: 0;
+}
+
+.toast button {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .5;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .validation-page {
+        padding: 1rem;
+    }
+    
+    .page-header {
+        padding: 1rem;
+    }
+    
+    .webcam-display {
+        height: 300px;
+    }
+    
+    .main-btns, .sub-btns {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% endblock %}

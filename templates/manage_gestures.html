@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Gestures{% endblock %}
+
+{% block content %}
+<div class="manage-container">
+    <div class="manage-header">
+        <h1><i class="fas fa-hands"></i> Manage Your Gestures</h1>
+        <p>View, manage, and delete your gesture samples</p>
+    </div>
+
+    {% if gestures %}
+    <div class="gestures-list">
+        {% for gesture in gestures %}
+        <div class="gesture-manage-card">
+            <div class="gesture-info">
+                <h3>{{ gesture.name|title }}</h3>
+                <div class="gesture-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-image"></i>
+                        {{ gesture.sample_count }} samples
+                    </span>
+                    <span class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        {{ gesture.created_at.strftime('%b %d, %Y') }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="gesture-samples-container">
+                {% if gesture.samples %}
+                <div class="samples-grid">
+                    {% for sample in gesture.samples %}
+                    <div class="sample-card">
+                        <div class="sample-image">
+                            <img src="{{ url_for('uploaded_file', filename=sample.image_path) }}" 
+                                 alt="{{ gesture.name }} sample {{ loop.index }}"
+                                 loading="lazy"
+                                 onerror="this.src='/static/img/placeholder.jpg'">
+                        </div>
+                        <div class="sample-info">
+                            <span class="sample-date">
+                                {{ sample.created_at.strftime('%H:%M %b %d') }}
+                            </span>
+                            <button class="btn-delete-sample" onclick="deleteSample({{ sample.id }})">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-samples">
+                    <i class="fas fa-image fa-2x"></i>
+                    <p>No samples uploaded for this gesture</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="gesture-actions">
+                <button class="btn-delete-gesture" onclick="deleteGesture({{ gesture.id }})">
+                    <i class="fas fa-trash"></i> Delete Entire Gesture
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-gestures">
+        <i class="fas fa-hands fa-4x"></i>
+        <h3>No gestures to manage</h3>
+        <p>Upload some gestures first to manage them</p>
+        <a href="{{ url_for('upload_gesture') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Upload Gesture
+        </a>
+    </div>
+    {% endif %}
+    
+    <div class="manage-footer">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+// Delete individual sample
+function deleteSample(sampleId) {
+    if (confirm('Are you sure you want to delete this sample?')) {
+        fetch(`/api/delete_sample/${sampleId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Sample deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete sample'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting sample');
+        });
+    }
+}
+
+// Delete entire gesture
+function deleteGesture(gestureId) {
+    if (confirm('⚠️ WARNING: This will delete ALL samples for this gesture!\n\nAre you sure?')) {
+        fetch(`/api/delete_gesture/${gestureId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Gesture deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete gesture'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting gesture');
+        });
+    }
+}
+</script>
+
+<style>
+.manage-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.manage-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.manage-header h1 {
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.manage-header p {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+/* Gesture List */
+.gestures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.gesture-manage-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.gesture-info {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.gesture-info h3 {
+    font-size: 1.5rem;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+    text-transform: capitalize;
+}
+
+.gesture-meta {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.meta-item i {
+    color: #94a3b8;
+}
+
+/* Samples Grid */
+.samples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sample-card {
+    background: #f8fafc;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.sample-image {
+    height: 150px;
+    overflow: hidden;
+}
+
+.sample-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.sample-card:hover .sample-image img {
+    transform: scale(1.05);
+}
+
+.sample-info {
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sample-date {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.btn-delete-sample {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: background 0.2s;
+}
+
+.btn-delete-sample:hover {
+    background: #dc2626;
+}
+
+/* Gesture Actions */
+.gesture-actions {
+    text-align: right;
+    padding-top: 1rem;
+    border-top: 2px solid #f1f5f9;
+}
+
+.btn-delete-gesture {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+}
+
+.btn-delete-gesture:hover {
+    background: #dc2626;
+}
+
+/* Empty State */
+.empty-gestures {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.empty-gestures h3 {
+    color: #1e293b;
+    margin: 1rem 0 0.5rem;
+}
+
+.empty-gestures p {
+    color: #64748b;
+    margin-bottom: 1.5rem;
+}
+
+.no-samples {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+}
+
+/* Footer */
+.manage-footer {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-secondary {
+    background: #64748b;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+    color: white;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .manage-container {
+        padding: 1rem;
+    }
+    
+    .samples-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .gesture-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

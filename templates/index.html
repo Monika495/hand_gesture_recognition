@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">👋 Gesture Validation</h1>
+            <p class="hero-subtitle">Train AI to recognize your custom hand gestures in real-time</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('signup') }}" class="btn btn-primary">Get Started</a>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="gesture-demo">
+                <span class="demo-icon">✋</span>
+                <span class="demo-icon">👍</span>
+                <span class="demo-icon">✌️</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="features-section">
+        <h2>How It Works</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📸</div>
+                <h3>1. Upload Gestures</h3>
+                <p>Take 2-3 photos of your custom hand gestures</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>2. AI Training</h3>
+                <p>Our AI learns your unique gesture patterns</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✅</div>
+                <h3>3. Live Validation</h3>
+                <p>Validate gestures in real-time using your webcam</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

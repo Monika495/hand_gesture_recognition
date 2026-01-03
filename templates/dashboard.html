@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    
+    <!-- Replace the dashboard header section in dashboard.html (around lines 4-9) -->
+
+<div class="dashboard-container">
+    <!-- Welcome Header with View All Logs Button -->
+    <div class="welcome-card">
+        <div class="welcome-content">
+            <h1>Welcome back, {{ current_user.username }}! 👋</h1>
+            <p class="subtitle">Your gesture recognition dashboard</p>
+        </div>
+        <a href="{{ url_for('validation_logs') }}" class="btn-view-logs">
+            <i class="fas fa-history"></i>
+            <span>View All Logs</span>
+        </a>
+    </div>
+
+    <!-- ... rest of the dashboard content remains the same ... -->
+
+
+<!-- Add this CSS to the <style> section in dashboard.html -->
+<style>
+/* Update welcome-card to use flexbox */
+.welcome-card {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.welcome-content {
+    flex: 1;
+    text-align: left;
+}
+
+.welcome-card h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* View All Logs Button */
+.btn-view-logs {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-view-logs i {
+    font-size: 1.2rem;
+}
+
+.btn-view-logs:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.btn-view-logs:active {
+    transform: translateY(-1px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .welcome-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .welcome-content {
+        text-align: center;
+    }
+    
+    .welcome-card h1 {
+        font-size: 2rem;
+    }
+    
+    .btn-view-logs {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- Quick Stats - Now with View All Logs Button -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">✋</div>
+        <div class="stat-content">
+            <h3>{{ total_gestures }}</h3>
+            <p>Gestures</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+            <h3>{{ accuracy }}%</h3>
+            <p>Accuracy</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-clickable" onclick="window.location.href='{{ url_for('validation_logs') }}'">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+            <h3>{{ total_validations }}</h3>
+            <p>Total Validations</p>
+        </div>
+        <a href="{{ url_for('validation_logs') }}" class="view-all-badge">
+            <i class="fas fa-eye"></i> View All
+        </a>
+    </div>
+</div>
+
+<!-- Add this CSS to the <style> section in dashboard.html -->
+<style>
+/* ... existing styles ... */
+
+/* Clickable stat card */
+.stat-card-clickable {
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.stat-card-clickable:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 35px rgba(59, 130, 246, 0.3);
+    border: 2px solid #3b82f6;
+}
+
+.view-all-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.stat-card-clickable:hover .view-all-badge {
+    opacity: 1;
+}
+
+.view-all-badge:hover {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+</style>
+
+
+
+    <!-- Main Action Card (Single Card) -->
+    <div class="main-action-card">
+        <h2><i class="fas fa-rocket"></i> Quick Actions</h2>
+        <div class="action-buttons">
+            <a href="{{ url_for('live_validation') }}" class="action-btn primary">
+                <i class="fas fa-hand-pointer"></i>
+                <span>Live Validation</span>
+                <small>Test your gestures</small>
+            </a>
+            <a href="{{ url_for('upload_gesture') }}" class="action-btn secondary">
+                <i class="fas fa-upload"></i>
+                <span>Upload Samples</span>
+                <small>Add new gesture images</small>
+            </a>
+            <a href="{{ url_for('manage_gestures') }}" class="action-btn tertiary">
+                <i class="fas fa-hands"></i>
+                <span>Manage Gestures</span>
+                <small>View/Delete samples</small>
+            </a>
+        </div>
+    </div>
+
+    <!-- Your Gestures -->
+    <div class="gestures-section">
+        <h2><i class="fas fa-hands"></i> Your Gestures</h2>
+        
+        {% if gestures %}
+        <div class="gestures-grid">
+            {% for gesture in gestures %}
+            <div class="gesture-card">
+                <div class="gesture-header">
+                    <h3>{{ gesture.name|title }}</h3>
+                    <span class="sample-badge">{{ gesture.sample_count }} samples</span>
+                </div>
+                
+                <!-- Show Sample Images -->
+                <div class="gesture-samples">
+                    {% if gesture.samples %}
+                        {% for sample in gesture.samples[:3] %}
+                        <div class="sample-image">
+                            <img src="{{ url_for('uploaded_file', filename=sample.image_path) }}" 
+                                 alt="{{ gesture.name }} sample {{ loop.index }}"
+                                 loading="lazy"
+                                 onerror="this.style.display='none'">
+                        </div>
+                        {% endfor %}
+                        {% if gesture.samples|length > 3 %}
+                        <div class="more-samples">
+                            +{{ gesture.samples|length - 3 }} more
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="no-samples">
+                            <i class="fas fa-image"></i>
+                            <p>No samples yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="gesture-footer">
+                    <span class="gesture-date">
+                        Added: {{ gesture.created_at.strftime('%b %d, %Y') }}
+                    </span>
+                    <div class="gesture-actions">
+                        <a href="{{ url_for('manage_gestures') }}" class="btn-view">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <button class="btn-delete" onclick="deleteGesture({{ gesture.id }})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-gestures">
+            <i class="fas fa-hands fa-4x"></i>
+            <h3>No gestures yet</h3>
+            <p>Upload your first gesture to get started</p>
+            <a href="{{ url_for('upload_gesture') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Upload First Gesture
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Activity -->
+    {% if recent_logs %}
+    <div class="recent-activity">
+        <h2><i class="fas fa-clock"></i> Recent Activity</h2>
+        <div class="activity-list">
+            {% for log in recent_logs %}
+            <div class="activity-item {{ 'success' if log.is_correct else 'error' }}">
+                <div class="activity-icon">
+                    {% if log.is_correct %}✅{% else %}❌{% endif %}
+                </div>
+                <div class="activity-details">
+                    <strong>{{ log.detected_gesture|default('No match', true) }}</strong>
+                    <span>{{ log.timestamp.strftime('%H:%M') }}</span>
+                </div>
+                {% if log.distance %}
+                <div class="activity-distance">
+                    {{ "%.3f"|format(log.distance) }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Delete gesture with confirmation
+function deleteGesture(gestureId) {
+    if (confirm('Are you sure you want to delete this gesture and all its samples?')) {
+        fetch(`/api/delete_gesture/${gestureId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Gesture deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete gesture'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting gesture');
+        });
+    }
+}
+</script>
+
+<style>
+/* Dashboard Styles */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.welcome-card {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.welcome-card h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Stats Grid - Now 3 columns */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1;
+}
+
+.stat-content p {
+    color: #64748b;
+    margin: 0.5rem 0 0;
+}
+
+/* Main Action Card */
+.main-action-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.main-action-card h2 {
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    border-radius: 15px;
+    text-decoration: none;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.action-btn i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.action-btn span {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: inherit;
+}
+
+.action-btn small {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    color: inherit;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+}
+
+.action-btn.tertiary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+}
+
+.action-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+/* Gestures Section */
+.gestures-section {
+    margin-bottom: 3rem;
+}
+
+.gestures-section h2 {
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.gestures-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.gesture-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s;
+}
+
+.gesture-card:hover {
+    transform: translateY(-5px);
+}
+
+.gesture-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.gesture-header h3 {
+    font-size: 1.3rem;
+    color: #1e293b;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.sample-badge {
+    background: #e2e8f0;
+    color: #475569;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.gesture-samples {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    min-height: 80px;
+    align-items: center;
+}
+
+.sample-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+}
+
+.sample-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #f1f5f9;
+}
+
+.more-samples {
+    width: 60px;
+    height: 60px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.no-samples {
+    width: 100%;
+    text-align: center;
+    padding: 1rem;
+    color: #94a3b8;
+}
+
+.no-samples i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.gesture-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.gesture-date {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.gesture-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-view {
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-view:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    transition: background 0.2s;
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+}
+
+.empty-gestures {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.empty-gestures h3 {
+    color: #1e293b;
+    margin: 1rem 0 0.5rem;
+}
+
+.empty-gestures p {
+    color: #64748b;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    color: white;
+}
+
+/* Recent Activity */
+.recent-activity {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.recent-activity h2 {
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    border-left: 4px solid;
+}
+
+.activity-item.success {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: #10b981;
+}
+
+.activity-item.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: #ef4444;
+}
+
+.activity-icon {
+    font-size: 1.2rem;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-details strong {
+    color: #1e293b;
+    display: block;
+    font-size: 0.95rem;
+}
+
+.activity-details span {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.activity-distance {
+    font-family: 'Courier New', monospace;
+    color: #64748b;
+    font-size: 0.875rem;
+    background: #f1f5f9;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .gestures-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .gesture-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .gesture-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+</style>
+{% endblock %}
