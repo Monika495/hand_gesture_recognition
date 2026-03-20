@@ -1,278 +1,220 @@
-📌 AI-Based Hand Gesture Validation System
-🚀 Overview
+🚀 AI Hand Gesture Validation System
 
-This project is a real-time hand gesture validation web application that uses computer vision and a pre-trained AI model to detect and verify hand gestures through a webcam. The system compares live hand gestures with predefined reference gestures and provides instant feedback indicating whether the gesture is correct or not.
 
-The application is built using a combination of backend, frontend, and computer vision technologies, and includes logging functionality for analysis.
 
-🎯 Problem Statement
 
-In many domains such as industrial training, safety procedures, and gesture-based communication, there is no automated mechanism to validate whether a user is performing the correct hand gesture. This leads to inefficiencies, lack of standardization, and potential errors.
+
+
+
+
+
+
+Real-time AI-powered system that detects, validates, and analyzes hand gestures using computer vision and machine learning techniques.
+
+🚀 Quick Start
+ • ✨ Features
+ • 🛠️ Tech Stack
+ • 📚 Architecture
+ • 📊 Working
+
+📖 Overview
+
+The AI Hand Gesture Validation System is a real-time web-based application that uses computer vision and AI to detect hand gestures and validate them against predefined reference gestures.
+
+This system integrates webcam input, AI-based hand tracking, and mathematical comparison techniques to provide instant feedback with confidence scores.
+
+🎯 The Problem
+
+In real-world applications like training, safety validation, and gesture-based systems:
+
+Challenges:
+
+❌ Manual gesture validation is inconsistent
+
+❌ No real-time feedback systems
+
+❌ Requires human supervision
+
+❌ High chances of error
 
 💡 Solution
 
-This system provides an automated solution by:
+This project solves the problem by:
 
-Capturing real-time hand gestures using a webcam
+✅ Capturing real-time gestures using webcam
 
-Detecting hand landmarks using an AI-based model
+✅ Detecting hand landmarks using AI
 
-Comparing gestures with stored references
+✅ Comparing gestures with reference data
 
-Providing instant feedback (Correct / Incorrect)
+✅ Providing instant feedback (Correct / Incorrect)
 
-Logging validation results for analysis
+✅ Storing results for analysis
 
-🧠 System Architecture
-User → Frontend → Flask Backend → Image Processing → AI Model → Comparison Logic → Database → Response → Frontend
-⚙️ Technologies Used
-🔹 Python
+🎯 Why This Project?
+Feature	Description
+⚡ Real-Time Detection	Instant gesture recognition using webcam
+🧠 AI-Based System	Uses MediaPipe for accurate hand tracking
+📊 Confidence Score	Provides match percentage
+🔔 Feedback System	Sound + visual result
+💾 Data Logging	Stores validation history
+✨ Key Features
+🎥 Real-Time Gesture Detection
 
-Used as the core programming language for backend development and integration of all components.
+Capture live hand gestures using webcam.
 
-🔹 Flask (Web Framework)
+🧠 AI-Based Landmark Detection
 
-Flask is used to build the backend server and handle communication between the frontend and backend.
+Detect 21 hand landmarks using MediaPipe.
 
-Responsibilities:
+📏 Smart Comparison Algorithm
 
-Handle API requests (e.g., /api/validate)
+Uses Euclidean distance for gesture matching.
 
-Process gesture validation logic
+📊 Confidence Calculation
 
-Communicate with the database
+Shows how accurate the match is.
 
-Send responses to the frontend
+🌐 Web Interface
 
-🔹 OpenCV (Computer Vision Library)
+Interactive UI built using Flask.
 
-Used for real-time image capture and preprocessing.
+🔗 Public Access
 
-Why OpenCV?
+Share your app using ngrok.
 
-Provides easy access to webcam
+🛠️ Technology Stack
+🔹 Backend
 
-Efficient frame capture
+Python 3.10 → Core logic
 
-Supports image manipulation
+Flask → Web server
 
-Usage:
+🔹 Computer Vision
 
-cap = cv2.VideoCapture(0)
-ret, frame = cap.read()
-🔹 MediaPipe (AI Hand Tracking Model)
+OpenCV → Webcam capture
 
-MediaPipe is a pre-trained machine learning framework used for detecting hand landmarks.
+MediaPipe → AI hand detection
 
-Key Functionality:
+🔹 Database
 
-Detects hand in an image
+SQLite → Store logs
 
-Extracts 21 landmark points (x, y, z coordinates)
+🔹 Frontend
 
-Why MediaPipe?
+HTML, CSS, JS → UI
 
-No need to train a model
+🔹 Deployment
 
-High accuracy and real-time performance
+ngrok → Public link
 
-Lightweight and efficient
+📚 System Architecture
+User → Frontend → Flask → OpenCV → RGB Conversion → MediaPipe
+→ Landmark Extraction → Comparison → Result → SQLite → Response
+🔄 Working Process
+Step 1: Capture Frame
 
-🔹 RGB Conversion (Important Step)
+OpenCV captures webcam frame.
 
-OpenCV captures images in BGR format, while MediaPipe expects RGB format.
+Step 2: Convert Image
 
-Conversion:
+Convert BGR → RGB for AI model.
 
 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+Step 3: Detect Hand
 
-Reason:
-Ensures correct color representation and improves detection accuracy.
+MediaPipe detects:
 
-🔹 SQLite (Database)
+21 landmarks (x, y, z)
 
-SQLite is a lightweight, file-based database used to store validation logs.
+Step 4: Compare Gestures
 
-Why SQLite?
+Using Euclidean Distance:
 
-No server setup required
+distance = √((x1-x2)² + (y1-y2)² + (z1-z2)²)
+Step 5: Decision
+If distance < threshold → MATCH ✅
+Else → NOT MATCH ❌
+Step 6: Store Result
 
-Easy integration with Python (sqlite3)
+Saved in SQLite database.
 
-Suitable for small to medium applications
-
-Data Stored:
-
-Gesture name
-
-Validation result
-
-Confidence score
-
-Timestamp
-
-🔹 Frontend (HTML, CSS, JavaScript)
-
-Used to build the user interface.
-
-Responsibilities:
-
-Capture user interaction
-
-Display validation results
-
-Show dashboard and logs
-
-Play feedback sounds
-
-🔹 ngrok (Tunneling Tool)
-
-Used to expose the locally running Flask application to the public internet.
-
-Purpose:
-
-Generate temporary public URL
-
-Enable remote access for demo/testing
-
-🔄 Working Process (Step-by-Step)
-
-The webcam captures real-time video using OpenCV
-
-The captured frame is converted from BGR to RGB
-
-The RGB image is passed to MediaPipe
-
-MediaPipe detects the hand and extracts 21 landmarks
-
-Landmark data is structured into a coordinate list
-
-The system compares live landmarks with stored reference gestures
-
-Euclidean distance is calculated between corresponding points
-
-The average distance is compared with a threshold value
-
-If distance < threshold → Gesture is Correct
-
-Else → Gesture is Incorrect
-
-Result is stored in SQLite database
-
-Flask sends response to frontend
-
-Frontend displays result and feedback
-
-📐 Gesture Comparison Logic
-🔹 Euclidean Distance Formula
-distance = √((x1 - x2)² + (y1 - y2)² + (z1 - z2)²)
-🔹 Process
-
-Calculate distance for all 21 points
-
-Compute average distance
-
-Compare with threshold
-
-🔹 Decision Rule
-If distance < threshold → Match
-Else → No Match
-📊 Confidence Score
-
-Confidence is inversely proportional to distance:
-
-Lower distance → Higher confidence
-
-Higher distance → Lower confidence
-
-🗄️ Database Design (SQLite)
+📊 Database Structure
 
 Table: logs
 
-Column	Description
+Field	Description
 id	Unique ID
 gesture	Gesture name
-result	Correct / Incorrect
-confidence	Match percentage
-timestamp	Time of validation
-✨ Features
-
-Real-time gesture validation
-
-Confidence score calculation
-
-Adjustable threshold
-
-Multiple gesture support
-
-Validation logging
-
-Dashboard view
-
-Sound feedback
-
-📦 Installation & Setup
-# Clone repository
-git clone <your-repo-link>
-
-# Navigate to project
+result	Match / No Match
+confidence	%
+timestamp	Time
+📦 Installation
+Step 1: Clone Repo
+git clone https://github.com/Monika495/hand_gesture_recognition.git
 cd gesture-validation-webapp
-
-# Create virtual environment
+Step 2: Create Virtual Environment
 python -m venv venv
-
-# Activate environment
 venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run application
+Step 3: Install Dependencies
+pip install mediapipe==0.10.8 opencv-python numpy flask
+Step 4: Run App
 python app.py
-🌐 Public Access (ngrok)
+
+👉 Open:
+
+http://127.0.0.1:5000
+🌐 Public Deployment (ngrok)
 ngrok http 5000
-🎯 Use Cases
 
-Industrial training systems
+👉 Example:
 
-Safety compliance verification
+https://xxxxx.ngrok-free.dev
+📁 Project Structure
+gesture-validation-webapp/
+│
+├── app.py
+├── database.db
+├── gesture_processor.py
+│
+├── templates/
+├── static/
+│
+└── venv/
+🚀 Use Cases
 
-Gesture-based control systems
+🏭 Industrial safety training
 
-Sign language learning
+✋ Sign language systems
 
-🚧 Limitations
+🎮 Gesture-based control
 
-Sensitive to lighting conditions
+🧑‍🏫 Education
 
-Limited gesture dataset
+🚧 Challenges Faced
 
-Single-hand detection
+MediaPipe version compatibility
 
-🔮 Future Enhancements
+Real-time processing speed
 
-Deep learning-based gesture classification
+Gesture accuracy tuning
 
-Multi-hand support
+🔮 Future Scope
 
-Mobile application integration
+Deep learning gesture classification
+
+Multi-hand detection
 
 Cloud deployment
 
-🧩 Skills Gained
+👨‍💻 Developer
 
-Backend development using Flask
+Monika P
+AI & Computer Vision Enthusiast
 
-Computer vision fundamentals
+<div align="center">
+⭐ Star this repo if you like it!
 
-Real-time system design
+Made with ❤️ by Monika P
 
-Database integration (SQLite)
-
-API development
-
-Debugging and deployment
-
-🧠 Key Learning
-
-This project demonstrates how pre-trained AI models can be integrated into real-time applications without requiring custom model training, and how multiple technologies can be combined to build a complete end-to-end system.
+</div>
