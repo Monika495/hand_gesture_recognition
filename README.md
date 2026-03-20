@@ -12,7 +12,7 @@
 
 ## 📖 Overview
 
-The **Hand Gesture Validation System** is a web-based application that captures live webcam input, detects hand landmarks using AI, and compares gestures with stored references to determine correctness.
+The **Hand Gesture Validation System** is a web-based application that captures live webcam input, detects hand landmarks using AI, and compares gestures with stored references to determine correctness.  
 
 It provides **real-time feedback**, confidence scores, and validation logs through an interactive dashboard.
 
@@ -20,9 +20,9 @@ It provides **real-time feedback**, confidence scores, and validation logs throu
 
 ## 🎯 Problem Statement
 
-- Manual gesture validation is difficult and inconsistent  
-- No real-time feedback for gesture-based systems  
-- Lack of simple AI-based validation tools for beginners  
+- Manual gesture validation is difficult and inconsistent.  
+- No real-time feedback for gesture-based systems.  
+- Lack of simple AI-based validation tools for beginners.  
 
 ---
 
@@ -30,10 +30,10 @@ It provides **real-time feedback**, confidence scores, and validation logs throu
 
 This project solves the problem by:
 
-- Using **AI-based hand tracking**
-- Comparing gestures using **landmark distance calculation**
-- Providing **instant validation (Correct / Wrong)**
-- Storing results in a **database for analysis**
+- Using **AI-based hand tracking**  
+- Comparing gestures using **landmark distance calculation**  
+- Providing **instant validation (Correct / Wrong)**  
+- Storing results in a **database for analysis**  
 
 ---
 
@@ -84,12 +84,12 @@ This project solves the problem by:
 
 ## 📐 Gesture Matching Logic
 
-- Each hand has **21 landmarks (x, y coordinates)**
-- Distance is calculated using:
+- Each hand has **21 landmarks (x, y coordinates)**  
+- Distance is calculated using:  
 
-
-Distance = √((x1 - x2)² + (y1 - y2)²)
-
+\[
+\text{Distance} = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}
+\]
 
 - Lower distance = better match  
 - Confidence is calculated based on distance  
@@ -99,30 +99,27 @@ Distance = √((x1 - x2)² + (y1 - y2)²)
 ## 📦 Installation
 
 ### 🔹 Step 1: Clone Repository
-
 ```bash
 git clone https://github.com/yourusername/hand_gesture_recognition.git
 cd hand_gesture_recognition
 🔹 Step 2: Create Virtual Environment
 python -m venv venv
+# Windows
 venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
 🔹 Step 3: Install Dependencies
 pip install -r requirements.txt
 🔹 Step 4: Run Application
 python app.py
 
-👉 Open browser:
+Open browser: http://127.0.0.1:5000
 
-http://127.0.0.1:5000
-🌐 Public Access (Ngrok)
-
-To share your app online:
-
+🔹 Step 5: Public Access via Ngrok
 ngrok http 5000
 
-👉 You will get a public link like:
+You will get a public link like: https://xxxxx.ngrok-free.app
 
-https://xxxxx.ngrok-free.app
 🗄️ Database (SQLite3)
 
 Automatically created when app runs
@@ -133,15 +130,8 @@ Gesture samples
 
 Validation logs
 
-Example Table:
-
-id
-
-gesture_name
-
-confidence
-
-timestamp
+Example Table Structure:
+| id | gesture_name | confidence | timestamp |
 
 📊 Project Structure
 gesture-validation-webapp/
