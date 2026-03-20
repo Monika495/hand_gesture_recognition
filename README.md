@@ -1,220 +1,191 @@
-🚀 AI Hand Gesture Validation System
+# ✋ Hand Gesture Validation System
 
+[![Python](https://img.shields.io/badge/Python-3.10-blue.svg)]()
+[![Flask](https://img.shields.io/badge/Flask-WebApp-green.svg)]()
+[![OpenCV](https://img.shields.io/badge/OpenCV-ComputerVision-red.svg)]()
+[![MediaPipe](https://img.shields.io/badge/MediaPipe-HandTracking-orange.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
+> 🚀 A real-time AI-powered hand gesture validation web application that detects and validates user gestures using webcam input.
 
+---
 
+## 📖 Overview
 
+The **Hand Gesture Validation System** is a web-based application that captures live webcam input, detects hand landmarks using AI, and compares gestures with stored references to determine correctness.
 
+It provides **real-time feedback**, confidence scores, and validation logs through an interactive dashboard.
 
+---
 
+## 🎯 Problem Statement
 
+- Manual gesture validation is difficult and inconsistent  
+- No real-time feedback for gesture-based systems  
+- Lack of simple AI-based validation tools for beginners  
 
-Real-time AI-powered system that detects, validates, and analyzes hand gestures using computer vision and machine learning techniques.
+---
 
-🚀 Quick Start
- • ✨ Features
- • 🛠️ Tech Stack
- • 📚 Architecture
- • 📊 Working
-
-📖 Overview
-
-The AI Hand Gesture Validation System is a real-time web-based application that uses computer vision and AI to detect hand gestures and validate them against predefined reference gestures.
-
-This system integrates webcam input, AI-based hand tracking, and mathematical comparison techniques to provide instant feedback with confidence scores.
-
-🎯 The Problem
-
-In real-world applications like training, safety validation, and gesture-based systems:
-
-Challenges:
-
-❌ Manual gesture validation is inconsistent
-
-❌ No real-time feedback systems
-
-❌ Requires human supervision
-
-❌ High chances of error
-
-💡 Solution
+## 💡 Solution
 
 This project solves the problem by:
 
-✅ Capturing real-time gestures using webcam
+- Using **AI-based hand tracking**
+- Comparing gestures using **landmark distance calculation**
+- Providing **instant validation (Correct / Wrong)**
+- Storing results in a **database for analysis**
 
-✅ Detecting hand landmarks using AI
+---
 
-✅ Comparing gestures with reference data
+## ✨ Features
 
-✅ Providing instant feedback (Correct / Incorrect)
+- 📷 Live webcam gesture detection  
+- 🤖 AI-based hand landmark extraction  
+- 🎯 Gesture comparison & validation  
+- 📊 Confidence score display  
+- 🔊 Beep sound feedback  
+- 🧾 Validation logs dashboard  
+- ⚙️ Adjustable threshold  
 
-✅ Storing results for analysis
+---
 
-🎯 Why This Project?
-Feature	Description
-⚡ Real-Time Detection	Instant gesture recognition using webcam
-🧠 AI-Based System	Uses MediaPipe for accurate hand tracking
-📊 Confidence Score	Provides match percentage
-🔔 Feedback System	Sound + visual result
-💾 Data Logging	Stores validation history
-✨ Key Features
-🎥 Real-Time Gesture Detection
+## 🛠️ Technology Stack
 
-Capture live hand gestures using webcam.
+### 🔹 Backend
+- **Python** – Core programming language  
+- **Flask** – Web framework  
 
-🧠 AI-Based Landmark Detection
+### 🔹 AI & Computer Vision
+- **MediaPipe** – Detects 21 hand landmarks using pre-trained ML model  
+- **OpenCV** – Captures webcam frames and processes images  
 
-Detect 21 hand landmarks using MediaPipe.
+### 🔹 Frontend
+- **HTML, CSS, JavaScript** – User interface  
 
-📏 Smart Comparison Algorithm
+### 🔹 Database
+- **SQLite3** – Stores gesture data and validation logs  
 
-Uses Euclidean distance for gesture matching.
+### 🔹 Deployment
+- **Ngrok** – Exposes local server to public internet  
 
-📊 Confidence Calculation
+---
 
-Shows how accurate the match is.
+## ⚙️ How It Works
 
-🌐 Web Interface
+1. Webcam captures live video using OpenCV  
+2. Frame is converted from **BGR → RGB**  
+3. MediaPipe detects **21 hand landmarks**  
+4. Landmarks are compared with stored gesture data  
+5. Distance is calculated between points  
+6. If distance < threshold → ✅ Match  
+7. Result is sent to frontend and displayed  
 
-Interactive UI built using Flask.
+---
 
-🔗 Public Access
+## 📐 Gesture Matching Logic
 
-Share your app using ngrok.
+- Each hand has **21 landmarks (x, y coordinates)**
+- Distance is calculated using:
 
-🛠️ Technology Stack
-🔹 Backend
 
-Python 3.10 → Core logic
+Distance = √((x1 - x2)² + (y1 - y2)²)
 
-Flask → Web server
 
-🔹 Computer Vision
+- Lower distance = better match  
+- Confidence is calculated based on distance  
 
-OpenCV → Webcam capture
+---
 
-MediaPipe → AI hand detection
+## 📦 Installation
 
-🔹 Database
+### 🔹 Step 1: Clone Repository
 
-SQLite → Store logs
-
-🔹 Frontend
-
-HTML, CSS, JS → UI
-
-🔹 Deployment
-
-ngrok → Public link
-
-📚 System Architecture
-User → Frontend → Flask → OpenCV → RGB Conversion → MediaPipe
-→ Landmark Extraction → Comparison → Result → SQLite → Response
-🔄 Working Process
-Step 1: Capture Frame
-
-OpenCV captures webcam frame.
-
-Step 2: Convert Image
-
-Convert BGR → RGB for AI model.
-
-rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-Step 3: Detect Hand
-
-MediaPipe detects:
-
-21 landmarks (x, y, z)
-
-Step 4: Compare Gestures
-
-Using Euclidean Distance:
-
-distance = √((x1-x2)² + (y1-y2)² + (z1-z2)²)
-Step 5: Decision
-If distance < threshold → MATCH ✅
-Else → NOT MATCH ❌
-Step 6: Store Result
-
-Saved in SQLite database.
-
-📊 Database Structure
-
-Table: logs
-
-Field	Description
-id	Unique ID
-gesture	Gesture name
-result	Match / No Match
-confidence	%
-timestamp	Time
-📦 Installation
-Step 1: Clone Repo
-git clone https://github.com/Monika495/hand_gesture_recognition.git
-cd gesture-validation-webapp
-Step 2: Create Virtual Environment
+```bash
+git clone https://github.com/yourusername/hand_gesture_recognition.git
+cd hand_gesture_recognition
+🔹 Step 2: Create Virtual Environment
 python -m venv venv
 venv\Scripts\activate
-Step 3: Install Dependencies
-pip install mediapipe==0.10.8 opencv-python numpy flask
-Step 4: Run App
+🔹 Step 3: Install Dependencies
+pip install -r requirements.txt
+🔹 Step 4: Run Application
 python app.py
 
-👉 Open:
+👉 Open browser:
 
 http://127.0.0.1:5000
-🌐 Public Deployment (ngrok)
+🌐 Public Access (Ngrok)
+
+To share your app online:
+
 ngrok http 5000
 
-👉 Example:
+👉 You will get a public link like:
 
-https://xxxxx.ngrok-free.dev
-📁 Project Structure
+https://xxxxx.ngrok-free.app
+🗄️ Database (SQLite3)
+
+Automatically created when app runs
+
+Stores:
+
+Gesture samples
+
+Validation logs
+
+Example Table:
+
+id
+
+gesture_name
+
+confidence
+
+timestamp
+
+📊 Project Structure
 gesture-validation-webapp/
 │
 ├── app.py
+├── requirements.txt
 ├── database.db
-├── gesture_processor.py
+│
+├── static/
+│   ├── css/
+│   ├── js/
 │
 ├── templates/
-├── static/
+│   ├── index.html
+│   ├── dashboard.html
 │
-└── venv/
-🚀 Use Cases
+└── README.md
+🚀 Future Scope
 
-🏭 Industrial safety training
+Multi-hand gesture support
 
-✋ Sign language systems
+Deep learning model for better accuracy
 
-🎮 Gesture-based control
+Mobile support
 
-🧑‍🏫 Education
+Cloud deployment (AWS / Render)
 
-🚧 Challenges Faced
+Gesture-based authentication system
 
-MediaPipe version compatibility
+💼 Skills Gained
 
-Real-time processing speed
+Computer Vision
 
-Gesture accuracy tuning
+AI Model Integration
 
-🔮 Future Scope
+Flask Web Development
 
-Deep learning gesture classification
+Database Handling (SQLite)
 
-Multi-hand detection
+API Development
 
-Cloud deployment
+Real-time System Design
 
 👨‍💻 Developer
 
 Monika P
-AI & Computer Vision Enthusiast
-
-<div align="center">
-⭐ Star this repo if you like it!
-
-Made with ❤️ by Monika P
-
-</div>
+CSE Student | AI & Web Development Enthusiast
