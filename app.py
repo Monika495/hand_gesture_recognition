@@ -804,4 +804,4 @@ if __name__ == '__main__':
         print("   • Complete validation history")
         print("   • Gesture and sample management with delete")
         print("="*70 + "\n")
-        app.run(debug=True, host='127.0.0.1', port=5000)
+        app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
